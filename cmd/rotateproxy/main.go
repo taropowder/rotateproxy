@@ -3,6 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/elazarl/goproxy"
+	"github.com/elazarl/goproxy/ext/auth"
+	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -19,6 +23,7 @@ var (
 	proxy         string
 	checkURL      string
 	checkURLwords string
+	proxyProtocol string
 	portPattern   = regexp.MustCompile(`^\d+$`)
 )
 
@@ -32,6 +37,7 @@ func init() {
 	flag.StringVar(&rule, "rule", `protocol=="socks5" && "Version:5 Method:No Authentication(0x00)" && after="2022-02-01" && country="CN"`, "search rule")
 	flag.StringVar(&checkURL, "check", `https://www.google.com`, "check url")
 	flag.StringVar(&checkURLwords, "checkWords", `Copyright The Closure Library Authors`, "words in check url")
+	flag.StringVar(&proxyProtocol, "proxyProtocol", `socks5`, "socks5 / http")
 	flag.IntVar(&baseCfg.IPRegionFlag, "region", 0, "0: all 1: cannot bypass gfw 2: bypass gfw")
 	flag.IntVar(&baseCfg.SelectStrategy, "strategy", 3, "0: random, 1: Select the one with the shortest timeout, 2: Select the two with the shortest timeout, ...")
 	flag.IntVar(&pageCount, "page", 5, "the page count you want to crawl")
@@ -74,6 +80,24 @@ func main() {
 	rotateproxy.StartRunCrawler(token, email, rule, pageCount, proxy)
 	rotateproxy.StartCheckProxyAlive(checkURL, checkURLwords)
 	c := rotateproxy.NewRedirectClient(rotateproxy.WithConfig(&baseCfg))
-	c.Serve()
+	if proxyProtocol == "socks5" {
+		c.Serve()
+	} else if proxyProtocol == "http" {
+		proxyServer := goproxy.NewProxyHttpServer()
+		if baseCfg.Username != "" && baseCfg.Password != "" {
+			auth.ProxyBasic(proxyServer, "Auth", func(user, passwd string) bool {
+				return user == baseCfg.Username && baseCfg.Password == passwd
+			})
+		}
+
+		// 设置自定义的转发函数
+		proxyServer.Tr = &http.Transport{
+			Dial: c.Dial,
+		}
+
+		// 启动代理服务器
+		log.Fatal(http.ListenAndServe(baseCfg.ListenAddr, proxyServer))
+	}
+
 	select {}
 }

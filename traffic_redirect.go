@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"golang.org/x/net/proxy"
 	"io"
 	"net"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -149,6 +151,7 @@ type RedirectClient struct {
 
 	currentProxy string
 	preProcessor ConnPreProcessorIface
+	lb           LoadBalancer
 }
 
 type RedirectClientOption func(*RedirectClient)
@@ -164,6 +167,7 @@ func NewRedirectClient(opts ...RedirectClientOption) *RedirectClient {
 	for _, opt := range opts {
 		opt(c)
 	}
+	c.lb = LoadBalancer{}
 	if c.config != nil {
 		if c.config.Username != "" && c.config.Password != "" {
 			c.preProcessor = NewAuthPreProcessor(*c.config)
@@ -288,4 +292,52 @@ func copyBuffer(dst io.Writer, src io.Reader) (err error) {
 
 	_, err = CopyBufferWithCloseErr(dst, src, buf)
 	return err
+}
+
+// LoadBalancer 负载均衡器
+type LoadBalancer struct {
+	mu sync.Mutex
+}
+
+// NewLoadBalancer 创建一个负载均衡器
+func NewLoadBalancer() *LoadBalancer {
+	return &LoadBalancer{}
+}
+
+// Dial 实现Dial函数，用于负载均衡到不同的SOCKS二级代理
+func (c *RedirectClient) Dial(network, addr string) (net.Conn, error) {
+	c.lb.mu.Lock()
+	defer c.lb.mu.Unlock()
+
+	// 随机选择一个SOCKS二级代理
+	proxyURL, err := c.getRandomProxyURL()
+	if err != nil {
+		return nil, err
+	}
+
+	// 创建一个SOCKS代理拨号器
+	dialer, err := proxy.SOCKS5(network, proxyURL, nil, proxy.Direct)
+	if err != nil {
+		return nil, err
+	}
+
+	// 进行拨号
+	conn, err := dialer.Dial(network, addr)
+	if err != nil {
+		return nil, err
+	}
+
+	return conn, nil
+}
+
+// getRandomProxyURL 随机选择一个SOCKS二级代理
+func (c *RedirectClient) getRandomProxyURL() (string, error) {
+
+	key, err := RandomProxyURL(c.config.IPRegionFlag, c.config.SelectStrategy)
+	if err != nil {
+		return "", err
+	}
+	key = strings.TrimPrefix(key, "socks5://")
+
+	return key, nil
 }

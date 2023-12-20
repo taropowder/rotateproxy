@@ -3,10 +3,15 @@ module github.com/akkuman/rotateproxy
 go 1.17
 
 require (
+	github.com/elazarl/goproxy/ext v0.0.0-20190711103511-473e67f1d7d2
 	github.com/glebarez/sqlite v1.7.0
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	gorm.io/gorm v1.24.5
 )
+
+require github.com/elazarl/goproxy v0.0.0-20231117061959-7cc037d33fb5
+
+require golang.org/x/net v0.19.0 // indirect
 
 require (
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -18,7 +23,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230126093431-47fa9a501578 // indirect
-	golang.org/x/sys v0.14.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
 	modernc.org/libc v1.22.2 // indirect
 	modernc.org/mathutil v1.5.0 // indirect
 	modernc.org/memory v1.5.0 // indirect
