@@ -41,6 +41,7 @@ func init() {
 	flag.IntVar(&baseCfg.IPRegionFlag, "region", 0, "0: all 1: cannot bypass gfw 2: bypass gfw")
 	flag.IntVar(&baseCfg.SelectStrategy, "strategy", 3, "0: random, 1: Select the one with the shortest timeout, 2: Select the two with the shortest timeout, ...")
 	flag.IntVar(&pageCount, "page", 5, "the page count you want to crawl")
+	flag.BoolVar(&rotateproxy.IsDebug, "debug", false, "debug mode to see log")
 	flag.Parse()
 
 	if checkURL != "https://www.google.com" && checkURLwords == "Copyright The Closure Library Authors" {

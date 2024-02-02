@@ -41,8 +41,9 @@ func CheckProxyAlive(proxyURL string) (respBody string, timeout int64, avail boo
 
 	// http://cip.cc isn't stable enough for proxies alive test.
 	resp, err := httpclient.Get("https://www.baidu.com/robots.txt")
-	
+
 	if err != nil {
+		DebugLog(Warn("[!] %v: %v", proxyURL, err))
 		return "", 0, false
 	}
 	defer resp.Body.Close()
@@ -52,7 +53,8 @@ func CheckProxyAlive(proxyURL string) (respBody string, timeout int64, avail boo
 		return "", 0, false
 	}
 	if !strings.Contains(string(body), "Baiduspider-image") {
-			return "", 0, false
+		DebugLog(Warn("[!] err  live  %s resp: %v", proxyURL, err))
+		return "", 0, false
 	}
 	return string(body), timeout, true
 }
@@ -71,6 +73,7 @@ func CheckProxyWithCheckURL(proxyURL string, checkURL string, checkURLwords stri
 	startTime := time.Now()
 	resp, err := httpclient.Get(checkURL)
 	if err != nil {
+		DebugLog(Warn("[!] httpclient.Get: %v", err))
 		return 0, false
 	}
 	defer resp.Body.Close()
@@ -78,6 +81,7 @@ func CheckProxyWithCheckURL(proxyURL string, checkURL string, checkURLwords stri
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
+		DebugLog(Warn("[!] io.ReadAll: %v", err))
 		return 0, false
 	}
 

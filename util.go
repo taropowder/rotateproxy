@@ -2,6 +2,7 @@ package rotateproxy
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"math/rand"
@@ -102,9 +103,16 @@ var (
 	Noticeln = color.New(color.FgBlue).SprintFunc()
 	Info     = color.New(color.FgGreen).SprintfFunc()
 	Warn     = color.New(color.FgRed).SprintfFunc()
+	IsDebug  = false
 )
 
 var (
 	InfoLog  = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile).Println
 	ErrorLog = log.New(os.Stdout, "", log.Ldate|log.Ltime|log.Lshortfile).Println
 )
+
+func DebugLog(content string) {
+	if IsDebug {
+		fmt.Print(content)
+	}
+}
