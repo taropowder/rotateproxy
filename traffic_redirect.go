@@ -207,7 +207,7 @@ func (c *RedirectClient) getValidSocks5Connection() (cc net.Conn, err error) {
 		}
 		key = strings.TrimPrefix(key, "socks5://")
 		c.currentProxy = key
-		cc, err = net.DialTimeout("tcp", key, 5*time.Second)
+		cc, err = net.DialTimeout("tcp", key, 30*time.Second)
 		if err != nil {
 			closeConn(cc)
 			SetProxyURLUnavail(key)
